@@ -25,9 +25,9 @@ The extension changes **REAPER's own audio configuration only**. It does not cha
 
 ### Recommended: build and install automatically
 
-1. Download `eIIIa_REAPER_Audio_Device_Switcher_Native_0.3.1_Documented.zip` from this repository and extract it.
+1. Obtain the Native 0.3.1 source package and extract it.
 2. Quit REAPER.
-3. Double-click **`BUILD_AND_INSTALL.command`** inside the extracted folder.
+3. Double-click **`BUILD_AND_INSTALL.command`**.
 4. If macOS asks for developer tools, install Apple's Command Line Tools and run the script again.
 5. Restart REAPER.
 6. Open **Actions → Show action list...**.
@@ -138,6 +138,7 @@ No ReaPack, SWS, ReaImGui, Lua environment, Python environment, Homebrew package
 
 - [Installation and update guide](docs/INSTALLATION.md)
 - [Using the switcher](docs/USAGE.md)
+- [FAQ](docs/FAQ.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Technical architecture](docs/ARCHITECTURE.md)
 - [Building from source](docs/BUILDING.md)
@@ -175,7 +176,7 @@ The small persistent slot assignments stored in REAPER ExtState are harmless if 
 
 ## Project structure
 
-The downloadable source package contains:
+The source package contains:
 
 ```text
 src/plugin_main.cpp           REAPER extension entry point and Actions
