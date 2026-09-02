@@ -1,149 +1,187 @@
 # eIIIa Audio Device Switcher for REAPER
 
-A native REAPER extension for fast, reliable switching between CoreAudio interfaces on macOS — directly from REAPER Actions and keyboard shortcuts.
+A native REAPER extension for switching REAPER audio interfaces from Actions, toolbar buttons, MIDI/OSC commands, or keyboard shortcuts — without changing the operating system's global audio device.
 
-> **Current release documented here:** Native 0.3.1  
-> **Platform:** macOS / CoreAudio  
-> **Runtime dependencies:** none beyond REAPER itself  
-> **No ReaPack, ReaImGui, Lua, SWS, Accessibility automation, mouse macros, or macOS system-audio switching.**
+**Universal 0.4.0** is designed for **macOS, Windows, and Linux** from one source tree.
 
-## Why this exists
+> **Test status**
+>
+> - **macOS / CoreAudio:** tested in real REAPER and confirmed working.
+> - **Windows:** Win32 implementation and build target are included; real-world REAPER testing is still needed.
+> - **Linux:** REAPER/SWELL implementation and build target are included; real-world REAPER testing is still needed.
+>
+> If you test Windows or Linux, please report the REAPER version, audio backend, device, and result.
 
-REAPER can switch audio devices from **Preferences → Audio → Device**, but doing that repeatedly is slow when you move between an audio interface, headphones, display audio, virtual devices, and other CoreAudio endpoints.
+## What it solves
 
-This extension turns that workflow into REAPER Actions:
+REAPER's normal way to change audio hardware is **Preferences → Audio → Device**. That is fine occasionally, but slow if you switch repeatedly between an interface, headphones, monitor/display audio, virtual devices, ASIO drivers, WASAPI endpoints, JACK/ALSA configurations, and similar setups.
 
-- open a compact native device menu;
-- see the CoreAudio interfaces currently available;
-- see the interface name and input/output channel count;
-- switch with one click;
-- assign REAPER keyboard shortcuts to persistent device slots 1–9.
+This extension turns audio-device switching into normal REAPER Actions.
 
-The extension changes **REAPER's own audio configuration only**. It does not change the macOS system default input or output device.
+## Interface
 
-## Quick start
+The popup is intentionally minimal. It contains only:
 
-### Recommended: build and install automatically
+```text
+1  Device / profile
+2  Device / profile
+3  Device / profile
+...
+9  Device / profile
 
-1. Obtain the Native 0.3.1 source package and extract it.
-2. Quit REAPER.
-3. Double-click **`BUILD_AND_INSTALL.command`**.
-4. If macOS asks for developer tools, install Apple's Command Line Tools and run the script again.
-5. Restart REAPER.
-6. Open **Actions → Show action list...**.
-7. Search for **`eIIIa Audio Device`**.
-8. Run **`eIIIa Audio Device: Show switcher`**.
+Refresh interfaces
+Rebuild slots 1–9
+```
 
-The build script downloads the official REAPER SDK and WDL, runs the tests, builds the native extension, and installs it to the standard REAPER `UserPlugins` folder.
+There is no redundant `REAPER Input / Output` line and no bottom status sentence. The menu width is therefore driven mainly by the actual device/profile names.
 
-For portable/custom REAPER resource paths, see [Installation](docs/INSTALLATION.md).
+The active configuration has a check mark.
 
 ## Actions
-
-The extension registers these actions in REAPER:
 
 - `eIIIa Audio Device: Show switcher`
 - `eIIIa Audio Device: Switch to slot 1`
 - `eIIIa Audio Device: Switch to slot 2`
-- `eIIIa Audio Device: Switch to slot 3`
-- `eIIIa Audio Device: Switch to slot 4`
-- `eIIIa Audio Device: Switch to slot 5`
-- `eIIIa Audio Device: Switch to slot 6`
-- `eIIIa Audio Device: Switch to slot 7`
-- `eIIIa Audio Device: Switch to slot 8`
+- ...
 - `eIIIa Audio Device: Switch to slot 9`
 
-Any of them can be assigned to a keyboard shortcut, toolbar button, MIDI/OSC action, custom action, or other REAPER action trigger.
+Assign these like any other REAPER Action: keyboard shortcuts, toolbar buttons, MIDI/OSC, custom actions, etc.
 
-## The switcher menu
+## Why it is different from changing the system default
 
-The popup displays:
+The extension changes **REAPER's own audio configuration only**.
 
-- slot number;
-- CoreAudio device name;
-- input/output channel count;
-- a check mark when the device is currently used by REAPER;
-- **Refresh interfaces**;
-- **Rebuild slots 1–9**.
+It does **not**:
 
-The top of the menu also shows REAPER's current input and output identifiers.
-
-## Slots 1–9
-
-Slots make one-key switching possible.
-
-- Slots are stored persistently by **CoreAudio device UID**, not by temporary numeric device ID.
-- Existing assignments are preserved across REAPER restarts.
-- A disconnected device keeps its slot; triggering that slot reports that the interface is not connected.
-- Empty slots are filled from currently connected interfaces.
-- **Rebuild slots 1–9** clears the slot map and rebuilds it from the currently connected interfaces.
-
-The current implementation automatically maintains the slot map; it does not provide a separate manual drag/drop slot editor.
+- change the macOS default input/output device;
+- call Windows `SetDefaultAudioEndpoint` or equivalent system-wide switching;
+- change the Linux desktop's global PipeWire/PulseAudio default;
+- use Accessibility/UI Automation;
+- use mouse coordinates or recorded clicks;
+- use AppleScript/System Events, AutoHotkey, xdotool, or similar automation;
+- require ReaPack, ReaImGui, Lua, Python, or SWS.
 
 ## How switching works
 
-REAPER's public extension API exposes functions for reading the currently opened audio device, but it does not expose a public `SetAudioDevice()` / `ApplyAudioDevicePreferences()` API.
+REAPER exposes read access to the currently opened audio device through `GetAudioDeviceInfo()`, but does not expose a public cross-platform `SetAudioDevice()` API.
 
-Earlier approaches that attempted to change REAPER configuration variables directly were not reliable on macOS. The working design intentionally routes the change through **REAPER's own Audio Device Preferences handler**:
+The reliable solution is to let **REAPER itself apply the configuration**:
 
-1. CoreAudio is queried for available device names, UIDs, and channel counts.
-2. REAPER's current input/output identifiers are read with `GetAudioDeviceInfo()`.
-3. The extension invokes REAPER's native **Audio device configuration** action.
-4. It identifies the exact Audio Device popup controls by their current value and available target value.
-5. It selects the target through the native control action and invokes REAPER's own **OK** handler.
-6. The result is verified again with `GetAudioDeviceInfo(IDENT_IN/IDENT_OUT)`.
-7. If REAPER does not open the requested device, the extension reports failure instead of pretending the switch succeeded.
+1. the extension opens REAPER's own **Audio device configuration** page internally (command `40099`);
+2. it finds REAPER's native device/system selectors;
+3. it selects the target using the control's native selection-change mechanism;
+4. it invokes REAPER's own **OK** handler;
+5. REAPER performs backend-specific validation, persistence, audio-engine restart, and device opening;
+6. the extension checks the resulting audio state instead of assuming success.
 
-The bridge deliberately refuses ambiguous UI matches rather than guessing.
+No physical mouse event is simulated.
 
-For the detailed implementation, see [Architecture](docs/ARCHITECTURE.md).
+### macOS
 
-## Important known limitation: brief Preferences flash
+CoreAudio is used for fast device enumeration and stable UIDs. Applying the change still goes through REAPER's own Preferences handler.
 
-REAPER must create its Audio Device Preferences window before the extension can access REAPER's native controls. The extension tries to hide that window immediately and repeatedly while the switch is being applied, but macOS may still draw a brief frame of the Preferences window.
+### Windows
 
-This is cosmetic. It is a consequence of using REAPER's reliable native apply path rather than fragile mouse/Accessibility automation. Eliminating the flash completely would require invasive interception of REAPER/AppKit window presentation, which is intentionally not used.
+The extension does not hard-code one backend. It inspects the **Audio System** selector that REAPER actually exposes and is designed to enumerate the available variants (for example ASIO, WASAPI, DirectSound, WaveOut, or other systems present in that REAPER build). Backend-specific driver/device selectors are then treated as REAPER audio profiles.
 
-## Safety and scope
+### Linux
 
-The extension is intentionally conservative:
+Linux is a separate target from macOS. The implementation uses REAPER/WDL **SWELL** controls and follows the same Preferences-driven strategy. It is designed to consume the audio systems exposed by the user's REAPER build rather than depending directly on libasound/JACK/PipeWire libraries.
 
-- **does not change the macOS system default audio device**;
-- does not redirect system audio;
-- does not use Accessibility permissions;
-- does not use `osascript` or System Events;
-- does not move or click the mouse;
-- does not depend on screen coordinates;
-- does not open UI or enumerate CoreAudio while REAPER is loading the extension;
-- verifies the actual device after every requested switch;
-- refuses to guess when the REAPER Preferences controls cannot be identified safely.
+## Slots 1–9
 
-## Requirements
+Slots provide instant switching.
 
-For normal runtime:
+On macOS the proven path persists devices by stable CoreAudio UID. On Windows/Linux the universal path uses a stable profile identity derived from the REAPER audio system plus selector values.
 
-- macOS;
-- REAPER;
-- one or more CoreAudio devices.
+If a saved slot is unavailable, the extension refuses to guess.
 
-For building from source:
+## Installation
 
-- Apple Command Line Tools (`xcode-select --install`);
-- `git` (included with the Command Line Tools);
-- internet access during the first build so the official REAPER SDK and WDL can be downloaded.
+See [Installation](docs/INSTALLATION.md) for step-by-step instructions on all platforms.
 
-No ReaPack, SWS, ReaImGui, Lua environment, Python environment, Homebrew package, or third-party runtime framework is required.
+The short version:
 
-## Installation, troubleshooting and development
+### macOS
 
-- [Installation and update guide](docs/INSTALLATION.md)
-- [Using the switcher](docs/USAGE.md)
-- [FAQ](docs/FAQ.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Technical architecture](docs/ARCHITECTURE.md)
-- [Building from source](docs/BUILDING.md)
+Double-click:
 
-## Diagnostic files
+```text
+BUILD_AND_INSTALL.command
+```
+
+Output:
+
+```text
+build/reaper_eIIIa_audio_device_switcher.dylib
+```
+
+Installed to the standard REAPER resource path:
+
+```text
+~/Library/Application Support/REAPER/UserPlugins/
+```
+
+### Windows
+
+Open a **x64 Native Tools Command Prompt for Visual Studio** and run:
+
+```text
+BUILD_AND_INSTALL.bat
+```
+
+Output:
+
+```text
+build\reaper_eIIIa_audio_device_switcher.dll
+```
+
+Default install location:
+
+```text
+%APPDATA%\REAPER\UserPlugins\
+```
+
+### Linux
+
+Run:
+
+```bash
+chmod +x BUILD_AND_INSTALL.sh
+./BUILD_AND_INSTALL.sh
+```
+
+Output:
+
+```text
+build/reaper_eIIIa_audio_device_switcher.so
+```
+
+Default install location:
+
+```text
+${XDG_CONFIG_HOME:-~/.config}/REAPER/UserPlugins/
+```
+
+## Do I build separately for each OS?
+
+Yes. It is **one source codebase**, but a native REAPER extension must be compiled for the operating system and CPU ABI on which it will run:
+
+- macOS → `.dylib`
+- Windows → `.dll`
+- Linux → `.so`
+
+A Mac build cannot simply be copied to Windows, and a Windows DLL cannot run on Linux. Cross-compilation is theoretically possible, but it does not remove the need to test the extension inside REAPER on the target OS. The supplied build scripts intentionally build natively on each platform.
+
+## Known limitation: brief Preferences flash
+
+On macOS, REAPER may briefly show its Audio Device Preferences window while the extension is switching. The extension hides the dialog as soon as it can identify it, but REAPER creates/presents that native window before the extension can reliably manipulate its controls, so a short flash can still occur.
+
+This is cosmetic. The project deliberately avoids invasive AppKit swizzling or global window-hook tricks just to eliminate a frame of UI.
+
+Windows/Linux also hide the internal Preferences window where the platform allows it, but those paths still need real-world testing.
+
+## Diagnostics
 
 Runtime log:
 
@@ -151,52 +189,30 @@ Runtime log:
 <REAPER resource path>/eIIIa_Audio_Device_Switcher.log
 ```
 
-Build logs:
+On macOS, use **Options → Show REAPER resource path in Finder** to locate it. Equivalent resource-path locations are documented for Windows/Linux in the installation guide.
 
-```text
-build/BUILD.log
-build/BUILD_AND_INSTALL.log
-```
+## Documentation
 
-To locate the REAPER resource path, use **Options → Show REAPER resource path in Finder**.
+- [Installation](docs/INSTALLATION.md)
+- [Usage](docs/USAGE.md)
+- [FAQ](docs/FAQ.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Building from source](docs/BUILDING.md)
+- [Testing Windows and Linux](docs/TESTING.md)
 
-## Uninstall
+## Development status
 
-1. Quit REAPER.
-2. Open the REAPER resource path and then `UserPlugins`.
-3. Delete:
+Universal 0.4.0 intentionally distinguishes **implemented** from **field-tested**:
 
-```text
-reaper_eIIIa_audio_device_switcher.dylib
-```
+- macOS is the reference implementation and has been tested in real REAPER;
+- Windows and Linux code paths, native menu implementations, profile model, platform build scripts, and compile/policy smoke tests are included;
+- Windows/Linux still need confirmation on actual REAPER installations and actual audio hardware/backends.
 
-4. Start REAPER again.
-
-The small persistent slot assignments stored in REAPER ExtState are harmless if left behind.
-
-## Project structure
-
-The source package contains:
-
-```text
-src/plugin_main.cpp           REAPER extension entry point and Actions
-src/plugin_state.cpp          switch orchestration, slots and verification
-src/coreaudio_devices.mm      CoreAudio enumeration and stable UIDs
-src/device_window.mm          native transient switcher menu
-src/reaper_prefs_bridge.mm    bridge to REAPER's native Audio Device controls
-src/prefs_popup_logic.cpp     safe popup matching logic
-src/slot_assignment.cpp       persistent slot assignment logic
-BUILD_AND_INSTALL.command     one-click build + standard REAPER install
-BUILD.command                 build-only wrapper with persistent log
-build_macos.command           tests, compilation and linking
-```
-
-## Status and platform roadmap
-
-Native 0.3.1 is the working macOS/CoreAudio implementation documented by this repository. A cross-platform architecture for Windows and Linux is being explored separately, but Windows/Linux support should not be assumed for this release.
+That is why feedback from Windows/Linux users is particularly useful.
 
 ## Author
 
 **eIIIa**
 
-This project is independent software for REAPER and is not affiliated with Cockos, Inc.
+Independent software for REAPER. Not affiliated with Cockos, Inc.
