@@ -1,70 +1,43 @@
 # FAQ
 
-## Does this change my Mac's default audio device?
+## Is this macOS-only?
 
-No. The extension changes REAPER's audio configuration only. Other applications keep using whatever macOS is configured to use.
+No. Universal 0.4.0 contains build targets and native REAPER-control paths for macOS, Windows, and Linux.
 
-## Does it need ReaPack?
+macOS is currently the **tested** platform. Windows and Linux are **implemented but not yet field-tested** in enough real REAPER installations to claim the same confidence level.
+
+## Why are there three binaries if it is universal?
+
+Because it is native C++ code. The source is shared, but each OS loads its own binary format and ABI:
+
+- macOS `.dylib`
+- Windows `.dll`
+- Linux `.so`
+
+## Can I compile the Windows DLL on my Mac?
+
+Cross-compilation is possible in principle, but it is not the recommended release workflow here. The REAPER Windows SDK expects a MSVC-compatible C++ ABI, and a binary still needs to be tested inside Windows REAPER. Build Windows releases with MSVC on Windows.
+
+## Does it change my system-wide audio device?
+
+No. It controls REAPER's own Audio Device configuration.
+
+## Does it require ReaPack, SWS, Lua, ReaImGui or Python?
 
 No.
 
-## Does it need SWS, ReaImGui or Lua?
+## Why does REAPER Preferences briefly flash on macOS?
 
-No. This is a native REAPER C++/Objective-C++ extension loaded from `UserPlugins`.
+The only reliable application path found is REAPER's own Audio Device Preferences handler. REAPER creates the window before the extension gets reliable access to its controls. The extension hides it immediately, but a compositor frame may already have been drawn. Avoiding that completely would require invasive global AppKit interception, which this project deliberately does not do.
 
-## Does it need Accessibility permission?
+## Why not edit `reaper.ini` and restart audio?
 
-No. It does not drive the mouse, use screen coordinates, or use AppleScript/System Events.
+That was tested. `Audio_Quit()` / `Audio_Init()` reopens the configuration REAPER already has in memory rather than reliably applying a newly written device preference. The working approach is to invoke REAPER's own Preferences handler.
 
-## Why does REAPER Preferences briefly flash during switching?
+## Why not call a `SetAudioDevice()` function?
 
-The current reliable live-switch mechanism uses REAPER's own Audio Device Preferences handler. REAPER must create that native window before its controls exist. The extension hides it as quickly as possible, but macOS can still composite a frame before the hide request takes effect.
+REAPER's public extension API exposes `GetAudioDeviceInfo()` but no public cross-platform audio-device setter/apply function.
 
-## Why not just write the device name into `reaper.ini`?
+## What happens if device detection is ambiguous?
 
-That was tested during development. Updating the CoreAudio preference in the file and calling only `Audio_Quit()` / `Audio_Init()` did not make the tested REAPER build reload the new device as a live switch. REAPER's own Preferences Apply/OK path does.
-
-## Why not change CoreAudio's system default instead?
-
-Because that would change audio routing for every application, not just REAPER. The goal of this extension is specifically a REAPER-local switch.
-
-## What are slots 1–9?
-
-They are persistent REAPER Actions pointing to stable CoreAudio device UIDs. They are useful for keyboard shortcuts, toolbar buttons, MIDI/OSC triggers and custom actions.
-
-## What happens when a slotted interface is unplugged?
-
-The slot remains assigned to that UID and reports that the interface is not connected. Another device is not silently substituted.
-
-## Can I have an output-only device in a slot?
-
-Yes. The current macOS implementation enumerates devices with input, output, or both. A direction the target device does not provide is left unchanged.
-
-## Does the extension switch sample rate or buffer size?
-
-The current user-facing switch operation targets the device selection. Other Audio Device Preferences remain under REAPER's control and are not presented as separate switcher settings.
-
-## Is there a prebuilt binary?
-
-The documented 0.3.1 package is designed to build locally with `BUILD_AND_INSTALL.command`. A public prebuilt/notarized distribution workflow is separate from this source-build workflow.
-
-## Where are diagnostics stored?
-
-Runtime log:
-
-```text
-<REAPER resource path>/eIIIa_Audio_Device_Switcher.log
-```
-
-Build logs:
-
-```text
-build/BUILD.log
-build/BUILD_AND_INSTALL.log
-```
-
-Use **Options → Show REAPER resource path in Finder** to locate the active REAPER resource directory.
-
-## Does it support Windows or Linux?
-
-Not in Native 0.3.1. This release is explicitly macOS/CoreAudio. A cross-platform design can reuse the same principle—letting REAPER apply its own audio settings—but Windows and Linux require separate platform adapters and should not be advertised as supported until they are tested in real REAPER builds.
+The extension refuses to guess and writes diagnostics to the log.
