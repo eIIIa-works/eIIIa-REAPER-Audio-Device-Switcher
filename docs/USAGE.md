@@ -1,34 +1,26 @@
-# Usage Guide
+# Usage
 
 ## Open the switcher
 
-In REAPER:
-
-1. open **Actions → Show action list...**;
-2. search for `eIIIa Audio Device`;
-3. run **eIIIa Audio Device: Show switcher**.
-
-A compact native menu appears at the mouse pointer.
-
-Each device row contains:
+Run:
 
 ```text
-slot   device name   input/output channel count
+eIIIa Audio Device: Show switcher
 ```
 
-A check mark indicates that REAPER is currently using that interface for at least one supported direction.
+The menu is intentionally a compact vertical list. It does not repeat REAPER input/output identifiers or display a status sentence underneath the functional controls.
 
-## Switch directly from the menu
+Each available row shows its slot number when assigned, the device/profile name, and channel information when available. The current profile is checked.
 
-Click a device row.
+## Switch directly
 
-The extension determines whether that target provides input, output, or both and asks REAPER to apply the corresponding change through REAPER's own Audio Device Preferences controls.
+Choose a row. The extension asks REAPER's own Audio Device Preferences handler to apply that configuration.
 
-After the native handler runs, the extension verifies the actual open device. A request is not reported as successful merely because a preference control changed.
+A short interruption or click in the audio stream is normal while REAPER closes/reopens the audio driver.
 
-## Use slots 1–9
+## Slots 1–9
 
-The extension exposes nine separate REAPER Actions:
+Assign shortcuts to:
 
 ```text
 eIIIa Audio Device: Switch to slot 1
@@ -36,67 +28,22 @@ eIIIa Audio Device: Switch to slot 1
 eIIIa Audio Device: Switch to slot 9
 ```
 
-Assign shortcuts to the slots you use most often:
-
-1. open the REAPER Action List;
-2. select a slot action;
-3. use REAPER's normal **Add...** shortcut assignment control;
-4. press the key or MIDI/OSC trigger you want to use.
-
-After that, switching does not require opening the menu.
-
-## How slot assignment behaves
-
-Slots store stable CoreAudio UIDs.
-
-- Already assigned devices keep their number.
-- Newly discovered devices fill empty slots until slots 1–9 are full.
-- If a device is unplugged, its stored slot is not silently reassigned to another device.
-- Triggering a slot whose interface is disconnected produces a clear status message.
-
-### Rebuild slots 1–9
-
-Use **Rebuild slots 1–9** when you deliberately want to discard the existing numbering and build a new map from the interfaces currently connected.
-
-The devices returned by the current macOS implementation are sorted by device name and then UID, so rebuilding produces deterministic numbering for the same connected set.
+This makes common switches effectively one-key actions.
 
 ## Refresh interfaces
 
-Use **Refresh interfaces** after connecting/disconnecting hardware if you want to refresh the menu immediately.
+Use **Refresh interfaces** after connecting/disconnecting hardware or when the Windows/Linux backend list has changed.
 
-The plugin also re-enumerates devices before a slot/device switch, so it does not rely solely on an old menu snapshot.
+## Rebuild slots 1–9
 
-## Input-only and output-only devices
+Use **Rebuild slots 1–9** when you intentionally want the current available profiles to be renumbered.
 
-The menu can contain:
+## macOS behavior
 
-- input-only devices;
-- output-only devices;
-- devices with both input and output.
+Rows are based on CoreAudio devices and stable device UIDs. Input/output channel counts are shown when CoreAudio reports them.
 
-The switcher does not force a nonexistent direction. For example, selecting an output-only endpoint changes REAPER's output but leaves the current input alone.
+## Windows/Linux behavior
 
-## Brief Preferences window flash
+The universal path treats the REAPER Audio Device page as the source of truth. It enumerates the Audio System choices REAPER exposes and synthesizes selectable profiles from driver/device selectors rather than assuming one fixed OS audio backend.
 
-During a switch, REAPER's Audio Device Preferences window may appear for a very short moment.
-
-This is expected with the current architecture: REAPER must construct its native preferences controls before the extension can drive the same internal apply path that REAPER uses itself. The extension hides the window as soon as it can, but macOS may draw a frame before that happens.
-
-No mouse automation or Accessibility permission is involved.
-
-## Status and errors
-
-The switcher reports useful states such as:
-
-- REAPER is already using the selected device;
-- slot is empty;
-- assigned interface is disconnected;
-- selected device disappeared during the operation;
-- Preferences controls could not be identified safely;
-- REAPER's actual reopened device did not match the requested device.
-
-Detailed diagnostics are also appended to:
-
-```text
-<REAPER resource path>/eIIIa_Audio_Device_Switcher.log
-```
+Windows/Linux are included in 0.4.0 but still need field testing. If discovery is incomplete on your REAPER build, send the runtime log and describe the visible Audio Device page.
