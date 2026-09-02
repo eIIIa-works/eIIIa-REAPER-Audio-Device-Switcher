@@ -1,169 +1,154 @@
-# Installation and Updates
+# Installation
 
-This page covers the standard REAPER installation, portable/custom REAPER resource paths, updating, manual installation, and removal.
+## First: find your REAPER resource path
 
-## Standard installation — easiest method
+REAPER loads native extensions from the `UserPlugins` directory inside its **resource path**.
 
-The project includes a one-click build-and-install script for the normal macOS REAPER resource location.
+In REAPER use:
 
-### 1. Quit REAPER
+**Options → Show REAPER resource path in Explorer/Finder**
 
-Do not replace a native extension while REAPER is using it.
+Portable REAPER installations can have a different resource path, so this is the authoritative way to find it.
 
-### 2. Run the installer
+## macOS
 
-Double-click:
+### Requirements
 
-```text
-BUILD_AND_INSTALL.command
-```
+- REAPER for macOS
+- Apple Command Line Tools
+- Git
+- Internet access for the first build
 
-The script performs the following sequence:
-
-1. downloads or updates the official REAPER SDK;
-2. downloads or updates Cockos WDL;
-3. verifies the expected SDK/WDL layout;
-4. runs the source and C++ tests;
-5. compiles the extension with Apple's `clang++`;
-6. links `reaper_eIIIa_audio_device_switcher.dylib`;
-7. keeps a build copy in the project `build/` directory;
-8. replaces the standard installed copy in REAPER's `UserPlugins` directory.
-
-Standard destination:
-
-```text
-~/Library/Application Support/REAPER/UserPlugins/reaper_eIIIa_audio_device_switcher.dylib
-```
-
-### 3. Restart REAPER
-
-Native extensions are loaded when REAPER starts. They are **not** installed through **Actions → Load ReaScript**.
-
-### 4. Confirm installation
-
-Open:
-
-**Actions → Show action list...**
-
-Search for:
-
-```text
-eIIIa Audio Device
-```
-
-You should see the switcher action and slot actions 1–9.
-
----
-
-## First-build developer tools
-
-The build requires Apple's Command Line Tools. If they are not installed, run:
+Install Apple's tools once if needed:
 
 ```bash
 xcode-select --install
 ```
 
-After installation finishes, run `BUILD_AND_INSTALL.command` again.
+### Automatic build + install
 
-The script also needs internet access the first time because it clones:
+1. Quit REAPER.
+2. Extract the source package.
+3. Double-click `BUILD_AND_INSTALL.command`.
+4. Wait for tests and compilation to finish.
+5. Restart REAPER.
+6. Open **Actions → Show action list...** and search for `eIIIa Audio Device`.
 
-- the official REAPER C/C++ extension SDK;
-- Cockos WDL/SWELL.
-
-They are kept under the project's `_deps/` directory and updated on subsequent builds.
-
----
-
-## Portable REAPER or a custom resource path
-
-`BUILD_AND_INSTALL.command` intentionally installs to the normal macOS REAPER resource location. If the REAPER instance you want to use has a different resource path, build first and copy the result manually.
-
-### 1. Build without installing
-
-Double-click:
-
-```text
-BUILD.command
-```
-
-The resulting extension is kept at:
+The script keeps a copy at:
 
 ```text
 build/reaper_eIIIa_audio_device_switcher.dylib
 ```
 
-### 2. Find the correct REAPER resource directory
-
-In the target REAPER installation choose:
-
-**Options → Show REAPER resource path in Finder**
-
-### 3. Quit REAPER
-
-### 4. Copy the extension
-
-Copy:
+and installs/replaces the standard copy at:
 
 ```text
-build/reaper_eIIIa_audio_device_switcher.dylib
+~/Library/Application Support/REAPER/UserPlugins/reaper_eIIIa_audio_device_switcher.dylib
 ```
 
-to:
+For portable REAPER, copy the built `.dylib` manually into that REAPER installation's `UserPlugins` folder.
+
+## Windows
+
+### Requirements
+
+- 64-bit REAPER for Windows
+- Visual Studio 2022 or Visual Studio Build Tools with **Desktop development with C++**
+- CMake
+- Git
+
+The official REAPER SDK uses a C++ interface that expects the MSVC-compatible ABI on Windows, so MSVC is the supported build route.
+
+### Automatic build + install
+
+1. Quit REAPER.
+2. Extract the source package.
+3. Open **x64 Native Tools Command Prompt for VS 2022**.
+4. `cd` to the extracted folder.
+5. Run:
+
+```bat
+BUILD_AND_INSTALL.bat
+```
+
+The script builds:
 
 ```text
-<that REAPER resource path>/UserPlugins/
+build\reaper_eIIIa_audio_device_switcher.dll
 ```
 
-Create `UserPlugins` if it does not already exist.
+and installs it to:
 
-### 5. Restart that REAPER installation
+```text
+%APPDATA%\REAPER\UserPlugins\reaper_eIIIa_audio_device_switcher.dll
+```
 
-This method is also useful when maintaining several separate REAPER installations.
+For portable REAPER, copy the built DLL to the portable resource path's `UserPlugins` folder instead.
 
----
+### Build only
 
-## Manual installation of a prebuilt `.dylib`
+```bat
+BUILD.bat
+```
 
-If a trusted prebuilt binary is provided:
+## Linux
 
-1. In REAPER choose **Options → Show REAPER resource path in Finder**.
-2. Quit REAPER.
-3. Open `UserPlugins` inside that resource directory.
-4. Copy `reaper_eIIIa_audio_device_switcher.dylib` into it.
-5. Replace an older copy if updating.
-6. Start REAPER.
+### Requirements
 
-A locally built binary is ad-hoc codesigned by the build script. Distribution/notarization of downloaded public binaries is a separate release concern and is not implied by the source build workflow.
+- REAPER for Linux
+- a C++17 compiler (`g++` or compatible)
+- CMake
+- Git
 
----
+### Automatic build + install
+
+```bash
+chmod +x BUILD_AND_INSTALL.sh
+./BUILD_AND_INSTALL.sh
+```
+
+The script builds:
+
+```text
+build/reaper_eIIIa_audio_device_switcher.so
+```
+
+and installs it to:
+
+```text
+${XDG_CONFIG_HOME:-$HOME/.config}/REAPER/UserPlugins/reaper_eIIIa_audio_device_switcher.so
+```
+
+For a portable/custom REAPER resource path, copy the `.so` manually into its `UserPlugins` directory.
+
+### Build only
+
+```bash
+./BUILD.sh
+```
+
+## After installation
+
+Restart REAPER. In **Actions**, search for:
+
+```text
+eIIIa Audio Device
+```
+
+You should see `Show switcher` and slot Actions 1–9.
 
 ## Updating
 
-For the standard installation:
-
-1. quit REAPER;
-2. replace/update the project files;
-3. run `BUILD_AND_INSTALL.command` again;
-4. restart REAPER.
-
-The installer replaces the existing `.dylib` atomically via a temporary sibling file and rename.
-
-Slot assignments are stored separately in REAPER ExtState and are not erased by replacing the binary.
-
----
+Build/install the newer source over the old plugin and restart REAPER. The installer replaces the binary but does not intentionally clear slot ExtState.
 
 ## Uninstalling
 
-1. Locate the correct REAPER resource path.
-2. Quit REAPER.
-3. Delete:
+Quit REAPER and delete the platform binary from `UserPlugins`:
 
 ```text
-<UserPlugins>/reaper_eIIIa_audio_device_switcher.dylib
+reaper_eIIIa_audio_device_switcher.dylib   macOS
+reaper_eIIIa_audio_device_switcher.dll     Windows
+reaper_eIIIa_audio_device_switcher.so      Linux
 ```
 
-4. Restart REAPER.
-
-If you installed the plugin into more than one portable/custom REAPER resource directory, remove the file from each one separately.
-
-The extension stores only a very small slot-to-device-UID mapping in persistent REAPER ExtState. Leaving it behind has no effect after the plugin is removed.
+Restart REAPER.
