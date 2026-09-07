@@ -1,5 +1,15 @@
 # Changelog
 
+## Universal 0.4.1
+
+- Added a transport guard before all user-facing audio-device actions.
+- If REAPER is actively playing or recording, the extension calls REAPER's native `OnStopButton()` before opening/discovering/applying audio-device settings.
+- `Show switcher` now stops active transport before discovery begins; direct slot switching does the same before applying the selected profile.
+- If REAPER cannot be stopped, the device operation is refused instead of allowing the native Audio Device dialog to enter a failed/glitched state.
+- Added `GetPlayState()` / `OnStopButton()` integration and regression tests for stopped, playing, recording, paused, unavailable-API, and stop-failure cases.
+- Windows/Linux compile-smoke tests now include the shared transport guard.
+- Documentation updated for transport-safe switching.
+
 ## Universal 0.4.0
 
 - Removed the redundant `REAPER Input / Output` information row from the switcher menu.
