@@ -10,11 +10,13 @@ eIIIa Audio Device: Show switcher
 
 The menu is intentionally a compact vertical list. It does not repeat REAPER input/output identifiers or display a status sentence underneath the functional controls.
 
+Before the menu/discovery path starts, the extension checks REAPER's transport. If playback or recording is active, it sends REAPER's native Stop command first. This is deliberate: changing audio hardware while REAPER is actively running the transport can prevent a clean device transition on some backends.
+
 Each available row shows its slot number when assigned, the device/profile name, and channel information when available. The current profile is checked.
 
 ## Switch directly
 
-Choose a row. The extension asks REAPER's own Audio Device Preferences handler to apply that configuration.
+Choose a row. The extension checks the transport again in case playback was started while the popup was open, stops active playback/recording if necessary, and then asks REAPER's own Audio Device Preferences handler to apply that configuration.
 
 A short interruption or click in the audio stream is normal while REAPER closes/reopens the audio driver.
 
@@ -46,4 +48,4 @@ Rows are based on CoreAudio devices and stable device UIDs. Input/output channel
 
 The universal path treats the REAPER Audio Device page as the source of truth. It enumerates the Audio System choices REAPER exposes and synthesizes selectable profiles from driver/device selectors rather than assuming one fixed OS audio backend.
 
-Windows/Linux are included in 0.4.0 but still need field testing. If discovery is incomplete on your REAPER build, send the runtime log and describe the visible Audio Device page.
+Windows/Linux are included in 0.4.1 but still need field testing. If discovery is incomplete on your REAPER build, send the runtime log and describe the visible Audio Device page.
