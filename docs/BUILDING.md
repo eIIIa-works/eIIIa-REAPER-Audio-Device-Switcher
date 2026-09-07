@@ -78,6 +78,7 @@ The source package includes pure C++ tests and policy/compile-smoke tests for:
 - slot assignment;
 - conservative Preferences matching;
 - compact menu policy;
+- transport guard logic and Stop-before-switch integration policy;
 - prohibition of system-default/mouse automation mechanisms;
 - Linux/SWELL source compilation through a test shim;
 - Windows/Win32 source compilation through a test shim;
