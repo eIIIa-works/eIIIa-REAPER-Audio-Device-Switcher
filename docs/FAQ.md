@@ -2,7 +2,7 @@
 
 ## Is this macOS-only?
 
-No. Universal 0.4.0 contains build targets and native REAPER-control paths for macOS, Windows, and Linux.
+No. Universal 0.4.1 contains build targets and native REAPER-control paths for macOS, Windows, and Linux.
 
 macOS is currently the **tested** platform. Windows and Linux are **implemented but not yet field-tested** in enough real REAPER installations to claim the same confidence level.
 
@@ -41,3 +41,9 @@ REAPER's public extension API exposes `GetAudioDeviceInfo()` but no public cross
 ## What happens if device detection is ambiguous?
 
 The extension refuses to guess and writes diagnostics to the log.
+
+## Does it stop playback automatically?
+
+Yes, from Universal 0.4.1. Before opening/discovering/applying an audio-device configuration, the extension checks `GetPlayState()`. If REAPER is playing or recording, it invokes REAPER's own `OnStopButton()` first. Paused transport is not treated as active playback.
+
+If REAPER still reports active playback/recording after Stop, the device operation is refused rather than continuing into a likely failed Preferences switch.
