@@ -4,6 +4,18 @@
 
 REAPER's own Audio Device Preferences page is the authoritative application mechanism. The extension does not attempt to reproduce backend-specific driver opening logic itself.
 
+## Transport guard
+
+Audio-device operations are gated by a shared transport guard before any platform-specific Preferences work begins. The guard uses REAPER's own APIs:
+
+```text
+GetPlayState() -> if playing/recording -> OnStopButton() -> verify transport stopped
+```
+
+The guard is called both before `Show switcher` discovery and before direct profile/device application. This keeps the behavior identical across macOS, Windows and Linux and prevents a backend-specific Preferences switch from starting while REAPER is actively playing or recording.
+
+Paused state is not treated as active playback. If Stop is unavailable or REAPER remains active after Stop, the audio-device operation is aborted.
+
 ## Common core
 
 Shared C++ code owns:
@@ -14,6 +26,7 @@ Shared C++ code owns:
 - stable profile identity helpers;
 - profile synthesis from REAPER selector snapshots;
 - diagnostics;
+- transport-safe Stop-before-switch policy;
 - startup safety.
 
 ## macOS adapter
