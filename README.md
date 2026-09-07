@@ -2,7 +2,7 @@
 
 A native REAPER extension for switching REAPER audio interfaces from Actions, toolbar buttons, MIDI/OSC commands, or keyboard shortcuts — without changing the operating system's global audio device.
 
-**Universal 0.4.0** is designed for **macOS, Windows, and Linux** from one source tree.
+**Universal 0.4.1** is designed for **macOS, Windows, and Linux** from one source tree.
 
 > **Test status**
 >
@@ -11,6 +11,10 @@ A native REAPER extension for switching REAPER audio interfaces from Actions, to
 > - **Linux:** REAPER/SWELL implementation and build target are included; real-world REAPER testing is still needed.
 >
 > If you test Windows or Linux, please report the REAPER version, audio backend, device, and result.
+
+## Download
+
+[Download Universal 0.4.1 source package](https://github.com/eIIIa-works/eIIIa-REAPER-Audio-Device-Switcher/raw/main/eIIIa_REAPER_Audio_Device_Switcher_Universal_0.4.1.zip)
 
 ## What it solves
 
@@ -46,6 +50,14 @@ The active configuration has a check mark.
 - `eIIIa Audio Device: Switch to slot 9`
 
 Assign these like any other REAPER Action: keyboard shortcuts, toolbar buttons, MIDI/OSC, custom actions, etc.
+
+## Transport-safe switching
+
+**Universal 0.4.1 stops active REAPER playback or recording before it starts any audio-device operation.**
+
+This applies both when opening `Show switcher` and when firing a slot Action directly. The extension checks REAPER's transport state with `GetPlayState()` and, when playback/recording is active, invokes REAPER's own `OnStopButton()` before device discovery or switching begins.
+
+This avoids the REAPER/backend failure mode where changing the audio device while the transport is running can leave the native Audio Device dialog visible or prevent the device change from being applied. If REAPER reports that the transport could not be stopped, the extension refuses the audio-device operation rather than opening Preferences into a known-bad state.
 
 ## Why it is different from changing the system default
 
@@ -203,7 +215,7 @@ On macOS, use **Options → Show REAPER resource path in Finder** to locate it. 
 
 ## Development status
 
-Universal 0.4.0 intentionally distinguishes **implemented** from **field-tested**:
+Universal 0.4.1 intentionally distinguishes **implemented** from **field-tested**:
 
 - macOS is the reference implementation and has been tested in real REAPER;
 - Windows and Linux code paths, native menu implementations, profile model, platform build scripts, and compile/policy smoke tests are included;
