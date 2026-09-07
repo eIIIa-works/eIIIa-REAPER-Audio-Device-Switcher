@@ -38,6 +38,12 @@ git --version
 
 Use **Refresh interfaces**. On macOS, confirm the device is visible to CoreAudio. On Windows/Linux, confirm the backend/device is present in REAPER's own **Preferences → Audio → Device** page.
 
+## Playback/recording was active when I triggered the switcher
+
+Universal 0.4.1 stops active playback/recording automatically before any audio-device operation. If the transport cannot be stopped, the extension aborts the device action and writes the reason to the runtime log.
+
+This behavior exists specifically to avoid the native Audio Device dialog getting stranded or the backend refusing a switch while the transport is running.
+
 ## A switch fails
 
 Find:
