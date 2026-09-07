@@ -9,11 +9,13 @@ macOS is already field-tested. Windows and Linux need community verification.
 3. Actions named `eIIIa Audio Device` appear.
 4. `Show switcher` opens a compact device/profile list.
 5. All expected REAPER Audio System variants are represented.
-6. Selecting a profile causes REAPER to switch audio successfully.
-7. Slots 1–9 persist across REAPER restart.
-8. Disconnected/unavailable profiles fail safely.
-9. REAPER's system-wide OS audio default is not changed.
-10. Send the runtime log for any failure or incomplete discovery.
+6. Start playback, trigger `Show switcher`, and confirm REAPER stops before the device UI/discovery path begins.
+7. Start playback again and trigger a slot Action; confirm REAPER stops before the profile is applied.
+8. Selecting a profile causes REAPER to switch audio successfully.
+9. Slots 1–9 persist across REAPER restart.
+10. Disconnected/unavailable profiles fail safely.
+11. REAPER's system-wide OS audio default is not changed.
+12. Send the runtime log for any failure or incomplete discovery.
 
 ## Report template
 
