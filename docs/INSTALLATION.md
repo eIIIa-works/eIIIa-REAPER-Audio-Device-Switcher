@@ -152,3 +152,7 @@ reaper_eIIIa_audio_device_switcher.so      Linux
 ```
 
 Restart REAPER.
+
+## Transport behavior in 0.4.1
+
+No extra setup is required. `GetPlayState()` and `OnStopButton()` are native REAPER APIs loaded by the extension. Active playback/recording is stopped automatically before audio-device discovery or switching.
