@@ -12,10 +12,6 @@ A native REAPER extension for switching REAPER audio interfaces from Actions, to
 >
 > If you test Windows or Linux, please report the REAPER version, audio backend, device, and result.
 
-## Download
-
-[Download Universal 0.4.1 source package](https://github.com/eIIIa-works/eIIIa-REAPER-Audio-Device-Switcher/raw/main/eIIIa_REAPER_Audio_Device_Switcher_Universal_0.4.1.zip)
-
 ## What it solves
 
 REAPER's normal way to change audio hardware is **Preferences → Audio → Device**. That is fine occasionally, but slow if you switch repeatedly between an interface, headphones, monitor/display audio, virtual devices, ASIO drivers, WASAPI endpoints, JACK/ALSA configurations, and similar setups.
